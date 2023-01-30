@@ -18,8 +18,8 @@ flywheel = Motor(Ports.PORT18, GearSetting.RATIO_6_1)
 intake = Motor(Ports.PORT17, GearSetting.RATIO_18_1)
 inertial_sensor = Inertial(Ports.PORT19)
 indexer = DigitalOut(brain.three_wire_port.a)
-expansion = DigitalOut(brain.three_wire_port.h)
-auton_selector = Bumper(brain.three_wire_port.c)
+expansion = DigitalOut(brain.three_wire_port.c)
+auton_selector = Bumper(brain.three_wire_port.b)
 
 class Robot():
     def __init__(self):
@@ -28,12 +28,11 @@ class Robot():
         self.DRIVE_MULTIPLER = 1
         self.TURN_MULTIPLER = 0.7
 
-        self.FLYWHEEL_FAR = 600
+        self.FLYWHEEL_FAR = 430
         self.FLYWHEEL_CLOSE = 335
         self.FLYWHEEL_OFF = 0
         self.flywheel_speed = 0
         self.FLYWHEEL_SPEED_DIFFERENCE = 30
-        self.is_launching = False
         self.MAX_LAUNCHES = 36
         self.remaining_launches = int(self.MAX_LAUNCHES)
 
@@ -108,12 +107,6 @@ class Robot():
         else:
             self.selected_auton += 1
 
-    def reverse_on(self):
-        self.DRIVE_MULTIPLER *= -1
-
-    def reverse_off(self):
-        self.DRIVE_MULTIPLER = abs(self.DRIVE_MULTIPLER)
-
     def intake_on(self):
         intake.set_max_torque(100, PERCENT)
         intake.spin(FORWARD, 10.9, VOLT)
@@ -140,7 +133,6 @@ class Robot():
 
         while True:
             velocity = round(flywheel.velocity(RPM))
-
             error = self.flywheel_speed - velocity
             total_error += error
             derivative = error - last_error
