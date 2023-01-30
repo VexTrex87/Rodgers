@@ -34,6 +34,8 @@ class Robot():
         self.flywheel_speed = 0
         self.FLYWHEEL_SPEED_DIFFERENCE = 30
         self.is_launching = False
+        self.MAX_LAUNCHES = 36
+        self.remaining_launches = int(self.MAX_LAUNCHES)
 
         self.selected_auton = 0
         self.autons = [
@@ -136,7 +138,7 @@ class Robot():
         last_error = 0
         total_error = 0
 
-        for second in range(100):
+        while True:
             velocity = round(flywheel.velocity(RPM))
 
             error = self.flywheel_speed - velocity
@@ -149,6 +151,7 @@ class Robot():
             wait(0.1, SECONDS)
 
     def launch(self):
+        self.remaining_launches -= 1
         indexer.set(True)
         wait(0.1, SECONDS)
         indexer.set(False)
@@ -183,6 +186,7 @@ class Robot():
                 ['Drivetrain: ', drivetrain.temperature(PERCENT), 70, Color.YELLOW, Color.GREEN],
                 ['Intake: ', intake.temperature(PERCENT), 70, Color.RED, Color.GREEN],
                 ['Flywheel: ', flywheel.temperature(PERCENT), 70, Color.RED, Color.GREEN],
+                ['Air', self.remaining_launches / self.MAX_LAUNCHES * 100, 15, Color.GREEN, Color.RED],
                 ['Battery: ', brain.battery.capacity(), 20, Color.GREEN, Color.RED],
             ]
 
