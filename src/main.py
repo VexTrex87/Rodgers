@@ -33,7 +33,7 @@ class Robot():
         self.FLYWHEEL_OFF = 0
         self.flywheel_speed = 0
         self.FLYWHEEL_SPEED_DIFFERENCE = 30
-        self.MAX_LAUNCHES = 36
+        self.MAX_LAUNCHES = 45
         self.remaining_launches = int(self.MAX_LAUNCHES)
 
         self.selected_auton = 0
@@ -47,6 +47,8 @@ class Robot():
         ]
 
         self.pre_auton()
+
+    # auton
 
     def pre_auton(self):
         auton_selector.pressed(self.select_auton)
@@ -68,8 +70,6 @@ class Robot():
 
         controller.buttonL1.pressed(self.intake_on)
         controller.buttonL1.released(self.intake_off)
-        controller.buttonL2.pressed(self.reverse_on)
-        controller.buttonL2.released(self.reverse_off)
         controller.buttonR1.pressed(self.launch)
         controller.buttonUp.pressed(self.flywheel_close)
         controller.buttonDown.pressed(self.flywheel_off)
@@ -107,6 +107,8 @@ class Robot():
         else:
             self.selected_auton += 1
 
+    # control
+
     def intake_on(self):
         intake.set_max_torque(100, PERCENT)
         intake.spin(FORWARD, 10.9, VOLT)
@@ -114,38 +116,10 @@ class Robot():
     def intake_off(self):
         intake.stop(COAST)
 
-    def flywheel_far(self):
-        self.flywheel_speed = self.FLYWHEEL_FAR
-
-    def flywheel_close(self):
-        self.flywheel_speed = self.FLYWHEEL_CLOSE
-
-    def flywheel_off(self):
-        self.flywheel_speed = self.FLYWHEEL_OFF
-
-    def flywheel_pid(self):
-        Kp = 0.05
-        Ki = 0.003
-        Kd = 0
-
-        last_error = 0
-        total_error = 0
-
-        while True:
-            velocity = round(flywheel.velocity(RPM))
-            error = self.flywheel_speed - velocity
-            total_error += error
-            derivative = error - last_error
-            power = (error * Kp) + (total_error * Ki) + (derivative * Kd)
-            last_error = error
-
-            flywheel.spin(FORWARD, power, VOLT)
-            wait(0.1, SECONDS)
-
     def launch(self):
         self.remaining_launches -= 1
         indexer.set(True)
-        wait(0.1, SECONDS)
+        wait(0.4, SECONDS)
         indexer.set(False)
 
     def expand(self):
@@ -163,6 +137,42 @@ class Robot():
         front_right_wheel.spin(FORWARD, (y_power - x_power) / 10.9, VOLT)
         middle_right_wheel.spin(FORWARD, (y_power - x_power) / 10.9, VOLT)
         back_right_wheel.spin(FORWARD, (y_power - x_power) / 10.9, VOLT)
+
+    # flywheel
+
+    def flywheel_far(self):
+        self.flywheel_speed = self.FLYWHEEL_FAR
+
+    def flywheel_close(self):
+        self.flywheel_speed = self.FLYWHEEL_CLOSE
+
+    def flywheel_off(self):
+        self.flywheel_speed = 0
+
+    def flywheel_pid(self):
+        Kp = 0.05
+        Ki = 0.003
+        Kd = 0
+
+        last_error = 0
+        total_error = 0
+
+        while True:
+            velocity = round(flywheel.velocity(RPM))
+            error = self.flywheel_speed - velocity
+            total_error += error
+            derivative = error - last_error
+            power = (error * Kp) + (total_error * Ki) + (derivative * Kd)
+            last_error = error
+
+            if self.flywheel_speed == 0:
+                flywheel.stop(COAST)
+            else:
+                flywheel.spin(FORWARD, power, VOLT)
+
+            wait(0.1, SECONDS)
+
+    # brain
 
     def update_brain(self):
         while True:
