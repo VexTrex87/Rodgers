@@ -18,8 +18,8 @@ flywheel = Motor(Ports.PORT18, GearSetting.RATIO_6_1)
 intake = Motor(Ports.PORT17, GearSetting.RATIO_18_1)
 inertial_sensor = Inertial(Ports.PORT19)
 indexer = DigitalOut(brain.three_wire_port.a)
-expansion = DigitalOut(brain.three_wire_port.c)
 auton_selector = Bumper(brain.three_wire_port.b)
+expansion = DigitalOut(brain.three_wire_port.c)
 
 class Robot():
     def __init__(self):
@@ -77,19 +77,26 @@ class Robot():
 
         self.flywheel_close()
 
-    def left_single(self):
+    def left_single(self):        
+        # roller 1
+        # launch discs
+
         pass
 
     def left_double(self):
-        pass
+        # roller
+        # launch discs
+        # roller 2
 
-    def right_single(self):
         pass
 
     def pog_skills(self):
-        pass
+        # roller 1
+        # roller 2
+        # roller 3
+        # roller 4
+        # expansion
 
-    def pog_skills_discs(self):
         pass
 
     def no_auton(self):
