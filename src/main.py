@@ -1,4 +1,5 @@
 from vex import *
+import time
 
 brain = Brain()
 controller = Controller()
@@ -13,17 +14,17 @@ middle_right_wheel = Motor(Ports.PORT15, GearSetting.RATIO_6_1, True)
 back_right_wheel = Motor(Ports.PORT16, GearSetting.RATIO_6_1, True)
 right_wheels = MotorGroup(front_right_wheel, middle_right_wheel, back_right_wheel)
 
-drivetrain = DriveTrain(left_wheels, right_wheels)
+inertial_sensor = Inertial(Ports.PORT19)
+drivetrain = SmartDrive(left_wheels, right_wheels, inertial_sensor)
 flywheel = Motor(Ports.PORT18, GearSetting.RATIO_6_1)
 intake = Motor(Ports.PORT17, GearSetting.RATIO_18_1)
-inertial_sensor = Inertial(Ports.PORT19)
 indexer = DigitalOut(brain.three_wire_port.a)
 auton_selector = Bumper(brain.three_wire_port.b)
 expansion = DigitalOut(brain.three_wire_port.c)
 
 class Robot():
     def __init__(self):
-        Competition(self.driver_controlled, self.auton)
+        Competition(self.auton, self.auton) ######
 
         self.DRIVE_MULTIPLER = 1
         self.TURN_MULTIPLER = 0.7
@@ -36,13 +37,11 @@ class Robot():
         self.MAX_LAUNCHES = 45
         self.remaining_launches = int(self.MAX_LAUNCHES)
 
-        self.selected_auton = 0
+        self.selected_auton = 2
         self.autons = [
             {'name': 'LEFT SINGLE', 'action': self.left_single}, 
             {'name': 'LEFT DOUBLE', 'action': self.left_double}, 
-            {'name': 'RIGHT SINGLE', 'action': self.right_single}, 
-            {'name': 'POG SKILLS', 'action': self.pog_skills},
-            {'name': 'POG SKILLS DISCS', 'action': self.pog_skills_discs},
+            {'name': 'POG SKILLS', 'action': self.prog_skills},
             {'name': 'NO AUTON', 'action': self.no_auton},
         ]
 
@@ -55,9 +54,7 @@ class Robot():
 
         drivetrain.set_stopping(COAST)
 
-        inertial_sensor.calibrate()
-        while inertial_sensor.is_calibrating():
-            wait(0.1, SECONDS)
+        ### inertial callibrate
 
         print('Ready')
 
@@ -90,14 +87,43 @@ class Robot():
 
         pass
 
-    def pog_skills(self):
-        # roller 1
-        # roller 2
-        # roller 3
-        # roller 4
-        # expansion
+    def prog_skills(self):
+        inertial_sensor.calibrate()
+        while inertial_sensor.is_calibrating():
+            wait(0.1, SECONDS)
+        inertial_sensor.set_heading(0, DEGREES)
 
-        pass
+        # Move backward and get the back roller
+        drivetrain.drive_for(FORWARD, 2, INCHES, 100, RPM)
+        intake.spin_for(FORWARD, 0.4, SECONDS, 100, PERCENT)
+
+        # Move towards and get the left roller
+        drivetrain.drive_for(REVERSE, 20, INCHES, 100, RPM)
+        drivetrain.turn_to_heading(90, DEGREES, 100, RPM)
+
+        drivetrain.drive_for(FORWARD, 23, INCHES, 100, RPM)
+        intake.spin_for(FORWARD, 0.4, SECONDS, 100, PERCENT)
+
+        # Move towards the high goal while intaking, and launch discs
+        drivetrain.drive_for(REVERSE, 9, INCHES, 100, RPM)
+        drivetrain.turn_to_heading(222, DEGREES, 100, RPM)
+        drivetrain.drive_for(FORWARD, 150, INCHES, 100, RPM)
+        drivetrain.turn_to_heading(180, DEGREES, 100, RPM)
+
+        # Move towards and get the top roller
+        drivetrain.drive_for(FORWARD, 12, INCHES, 100, RPM)
+        intake.spin_for(FORWARD, 0.4, SECONDS, 100, PERCENT)
+
+        # Move towards and get the right roller
+        drivetrain.drive_for(REVERSE, 24, INCHES, 100, RPM)
+        drivetrain.turn_to_heading(270, DEGREES, 100, RPM)
+        drivetrain.drive_for(FORWARD, 31, INCHES, 100, RPM)
+        intake.spin_for(FORWARD, 0.4, SECONDS, 100, PERCENT)
+
+        drivetrain.drive_for(FORWARD, 24, INCHES, 100, RPM)
+        drivetrain.turn_to_heading(312, DEGREES, 100, RPM)
+        wait(1, SECONDS)
+        self.expand()
 
     def no_auton(self):
         pass
@@ -118,7 +144,7 @@ class Robot():
 
     def intake_on(self):
         intake.set_max_torque(100, PERCENT)
-        intake.spin(FORWARD, 10.9, VOLT)
+        intake.spin(FORWARD, 12, VOLT)
 
     def intake_off(self):
         intake.stop(COAST)
