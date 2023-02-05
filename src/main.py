@@ -24,7 +24,7 @@ expansion = DigitalOut(brain.three_wire_port.c)
 
 class Robot():
     def __init__(self):
-        Competition(self.auton, self.auton) ######
+        Competition(self.auton, self.auton)
 
         self.DRIVE_MULTIPLER = 1
         self.TURN_MULTIPLER = 0.7
@@ -87,41 +87,103 @@ class Robot():
 
         pass
 
+    def _get_position(self):
+        wheel_positions = [
+            front_left_wheel.position(DEGREES),
+            middle_left_wheel.position(DEGREES),
+            back_left_wheel.position(DEGREES),
+
+            front_right_wheel.position(DEGREES),
+            middle_right_wheel.position(DEGREES),
+            back_right_wheel.position(DEGREES),
+        ]
+
+        average_position = sum(wheel_positions) / 6
+        current_position = average_position / 32
+        return current_position
+
+    def move(self, duration, velocity):
+        front_left_wheel.spin(FORWARD, velocity / 10.9, VOLT)
+        middle_left_wheel.spin(FORWARD, velocity / 10.9, VOLT)
+        back_left_wheel.spin(FORWARD, velocity / 10.9, VOLT)
+
+        front_right_wheel.spin(FORWARD, velocity / 10.9, VOLT)
+        middle_right_wheel.spin(FORWARD, velocity / 10.9, VOLT)
+        back_right_wheel.spin(FORWARD, velocity / 10.9, VOLT)
+
+        wait(duration)
+
+        front_left_wheel.stop(COAST)
+        middle_left_wheel.stop(COAST)
+        back_left_wheel.stop(COAST)
+
+        front_right_wheel.stop(COAST)
+        middle_right_wheel.stop(COAST)
+        back_right_wheel.stop(COAST)
+
+    def turn(self, heading, velocity):
+        front_left_wheel.spin(FORWARD, velocity / 10.9, VOLT)
+        middle_left_wheel.spin(FORWARD, velocity / 10.9, VOLT)
+        back_left_wheel.spin(FORWARD, velocity / 10.9, VOLT)
+
+        front_right_wheel.spin(FORWARD, -velocity / 10.9, VOLT)
+        middle_right_wheel.spin(FORWARD, -velocity / 10.9, VOLT)
+        back_right_wheel.spin(FORWARD, -velocity / 10.9, VOLT)
+
+        while True:
+            current_heading = inertial_sensor.heading(DEGREES)
+            if abs(current_heading - heading) < 2:
+                front_left_wheel.stop(COAST)
+                middle_left_wheel.stop(COAST)
+                back_left_wheel.stop(COAST)
+
+                front_right_wheel.stop(COAST)
+                middle_right_wheel.stop(COAST)
+                back_right_wheel.stop(COAST)
+
     def prog_skills(self):
+        FAST_DRIVE_SPEED = 25
+        DRIVE_SPEED = 10
+        TURN_SPEED = 10
+        INTAKE_DURATION = 0.4
+
         inertial_sensor.calibrate()
         while inertial_sensor.is_calibrating():
             wait(0.1, SECONDS)
         inertial_sensor.set_heading(0, DEGREES)
 
         # Move backward and get the back roller
-        drivetrain.drive_for(FORWARD, 2, INCHES, 100, RPM)
-        intake.spin_for(FORWARD, 0.4, SECONDS, 100, PERCENT)
+        drivetrain.drive_for(FORWARD, 2, INCHES, DRIVE_SPEED, VOLT)
+        intake.spin_for(FORWARD, INTAKE_DURATION, SECONDS, 100, PERCENT)
 
         # Move towards and get the left roller
-        drivetrain.drive_for(REVERSE, 20, INCHES, 100, RPM)
-        drivetrain.turn_to_heading(90, DEGREES, 100, RPM)
+        drivetrain.drive_for(REVERSE, 20, INCHES, DRIVE_SPEED, PERCENT)
+        drivetrain.turn_to_heading(90, DEGREES, TURN_SPEED, PERCENT)
 
-        drivetrain.drive_for(FORWARD, 23, INCHES, 100, RPM)
-        intake.spin_for(FORWARD, 0.4, SECONDS, 100, PERCENT)
+        drivetrain.drive_for(FORWARD, 23, INCHES, DRIVE_SPEED, PERCENT)
+        intake.spin_for(FORWARD, INTAKE_DURATION, SECONDS, 100, PERCENT)
+
+        return
 
         # Move towards the high goal while intaking, and launch discs
-        drivetrain.drive_for(REVERSE, 9, INCHES, 100, RPM)
-        drivetrain.turn_to_heading(222, DEGREES, 100, RPM)
-        drivetrain.drive_for(FORWARD, 150, INCHES, 100, RPM)
-        drivetrain.turn_to_heading(180, DEGREES, 100, RPM)
+        drivetrain.drive_for(REVERSE, 9, INCHES, DRIVE_SPEED, PERCENT)
+        drivetrain.turn_to_heading(225, DEGREES, TURN_SPEED, PERCENT)
+        drivetrain.drive_for(FORWARD, 150, INCHES, FAST_DRIVE_SPEED, PERCENT)
+        drivetrain.turn_to_heading(180, DEGREES, TURN_SPEED, PERCENT)
 
         # Move towards and get the top roller
-        drivetrain.drive_for(FORWARD, 12, INCHES, 100, RPM)
-        intake.spin_for(FORWARD, 0.4, SECONDS, 100, PERCENT)
+        drivetrain.drive_for(FORWARD, 12, INCHES, DRIVE_SPEED, PERCENT)
+        intake.spin_for(FORWARD, INTAKE_DURATION, SECONDS, 100, PERCENT)
 
         # Move towards and get the right roller
-        drivetrain.drive_for(REVERSE, 24, INCHES, 100, RPM)
-        drivetrain.turn_to_heading(270, DEGREES, 100, RPM)
-        drivetrain.drive_for(FORWARD, 31, INCHES, 100, RPM)
-        intake.spin_for(FORWARD, 0.4, SECONDS, 100, PERCENT)
+        drivetrain.drive_for(REVERSE, 24, INCHES, DRIVE_SPEED, PERCENT)
+        drivetrain.turn_to_heading(270, DEGREES, TURN_SPEED, PERCENT)
+        drivetrain.drive_for(FORWARD, 12, INCHES, DRIVE_SPEED, PERCENT)
+        intake.spin_for(FORWARD, INTAKE_DURATION, SECONDS, 100, PERCENT)
 
-        drivetrain.drive_for(FORWARD, 24, INCHES, 100, RPM)
-        drivetrain.turn_to_heading(312, DEGREES, 100, RPM)
+        # Expand
+        drivetrain.drive_for(REVERSE, 12, INCHES, DRIVE_SPEED, PERCENT)
+        drivetrain.turn_to_heading(225, DEGREES, TURN_SPEED, PERCENT)
         wait(1, SECONDS)
         self.expand()
 
