@@ -18,6 +18,7 @@ inertial_sensor = Inertial(Ports.PORT19)
 drivetrain = SmartDrive(left_wheels, right_wheels, inertial_sensor)
 flywheel = Motor(Ports.PORT18, GearSetting.RATIO_6_1)
 intake = Motor(Ports.PORT17, GearSetting.RATIO_6_1)
+roller = Motor(Ports.PORT5, GearSetting.RATIO_18_1)
 indexer = DigitalOut(brain.three_wire_port.a)
 auton_selector = Bumper(brain.three_wire_port.b)
 expansion = DigitalOut(brain.three_wire_port.c)
@@ -70,7 +71,10 @@ class Robot():
 
         controller.buttonL1.pressed(self.intake_on)
         controller.buttonL1.released(self.intake_off)
+        controller.buttonL2.pressed(self.roller_on)
+        controller.buttonL2.released(self.roller_off)
         controller.buttonR1.pressed(self.launch)
+        controller.buttonRight.pressed(self.flywheel_far)
         controller.buttonUp.pressed(self.flywheel_close)
         controller.buttonDown.pressed(self.flywheel_off)
         controller.buttonX.pressed(self.expand)
@@ -84,11 +88,36 @@ class Robot():
         pass
 
     def left_double(self):
-        # roller
-        # launch discs
-        # roller 2
+        self.flywheel_close()
 
-        pass
+        #forward into roller?
+        drivetrain.drive_for(FORWARD, 2, INCHES, 50, PERCENT)
+        intake.spin_for(FORWARD, 0.4, SECONDS, 100, PERCENT)
+        drivetrain.drive_for(REVERSE, 6, INCHES, 50, PERCENT)
+        wait(1, SECONDS)
+
+        drivetrain.turn_to_heading(-130, DEGREES, 20, PERCENT)
+        wait(1, SECONDS)
+    
+        drivetrain.drive_for(FORWARD, 220, INCHES, 70, PERCENT)
+        self.flywheel_far()
+        drivetrain.turn_to_heading(320, DEGREES, 20, PERCENT)
+
+        wait(1, SECONDS)
+        self.launch()
+        wait(2, SECONDS)
+        self.launch()
+        wait(2, SECONDS)
+        self.launch()
+        self.flywheel_off()
+
+        drivetrain.turn_to_heading(-130, DEGREES, 20, PERCENT)
+        drivetrain.drive_for(FORWARD, 220, INCHES, 50, PERCENT)
+        drivetrain.turn_to_heading(270, DEGREES, 30, PERCENT)
+        wait(1, SECONDS)
+
+        drivetrain.drive_for(FORWARD, 10, INCHES, 50, PERCENT)
+        intake.spin_for(FORWARD, 0.4, SECONDS, 100, PERCENT)
 
     def _move(self, distance, velocity):
         ERROR_CONSTANT = 3.33
@@ -101,9 +130,9 @@ class Robot():
         intake.spin_for(FORWARD, duration, SECONDS, 100, PERCENT)
 
     def prog_skills(self):
-        FAST_DRIVE_SPEED = 40
-        DRIVE_SPEED = 25
-        TURN_SPEED = 25
+        FAST_DRIVE_SPEED = 50
+        DRIVE_SPEED = 30
+        TURN_SPEED = 30
         INTAKE_DURATION = 0.4
 
         # Move backward and get the back roller
@@ -120,11 +149,11 @@ class Robot():
         # Move towards the high goal while intaking, and launch discs
         self._move(-9, DRIVE_SPEED)
         self._turn(225, TURN_SPEED)
-        self._move(150, FAST_DRIVE_SPEED)
+        self._move(124, FAST_DRIVE_SPEED)
         self._turn(180, TURN_SPEED)
 
         # Move towards and get the top roller
-        self._move(12, DRIVE_SPEED)
+        self._move(24, DRIVE_SPEED)
         self._intake(INTAKE_DURATION)
 
         # Move towards and get the right roller
@@ -156,6 +185,13 @@ class Robot():
 
     # control
 
+    def roller_on(self):
+        roller.set_max_torque(100, PERCENT)
+        roller.spin(FORWARD, 12, VOLT)
+
+    def roller_off(self):
+        roller.stop(COAST)
+
     def intake_on(self):
         intake.set_max_torque(100, PERCENT)
         intake.spin(FORWARD, 12, VOLT)
@@ -166,7 +202,7 @@ class Robot():
     def launch(self):
         self.remaining_launches -= 1
         indexer.set(True)
-        wait(0.4, SECONDS)
+        wait(0.15, SECONDS)
         indexer.set(False)
 
     def expand(self):
