@@ -4,15 +4,13 @@ import time
 brain = Brain()
 controller = Controller()
 
-front_left_wheel = Motor(Ports.PORT11, GearSetting.RATIO_6_1, False)
-middle_left_wheel = Motor(Ports.PORT12, GearSetting.RATIO_6_1, False)
-back_left_wheel = Motor(Ports.PORT13, GearSetting.RATIO_6_1, False)
-left_wheels = MotorGroup(front_left_wheel, middle_left_wheel, back_left_wheel)
+front_left_wheel = Motor(Ports.PORT11, GearSetting.RATIO_18_1, False)
+back_left_wheel = Motor(Ports.PORT13, GearSetting.RATIO_18_1, False)
+left_wheels = MotorGroup(front_left_wheel, back_left_wheel)
 
-front_right_wheel = Motor(Ports.PORT14, GearSetting.RATIO_6_1, True)
-middle_right_wheel = Motor(Ports.PORT15, GearSetting.RATIO_6_1, True)
-back_right_wheel = Motor(Ports.PORT16, GearSetting.RATIO_6_1, True)
-right_wheels = MotorGroup(front_right_wheel, middle_right_wheel, back_right_wheel)
+front_right_wheel = Motor(Ports.PORT14, GearSetting.RATIO_18_1, True)
+back_right_wheel = Motor(Ports.PORT16, GearSetting.RATIO_18_1, True)
+right_wheels = MotorGroup(front_right_wheel, back_right_wheel)
 
 inertial_sensor = Inertial(Ports.PORT19)
 drivetrain = SmartDrive(left_wheels, right_wheels, inertial_sensor)
@@ -30,8 +28,8 @@ class Robot():
         self.DRIVE_MULTIPLER = 1
         self.TURN_MULTIPLER = 0.7
 
-        self.FLYWHEEL_FAR = 430
-        self.FLYWHEEL_CLOSE = 335
+        self.FLYWHEEL_FAR = 390
+        self.FLYWHEEL_CLOSE = 350
         self.FLYWHEEL_OFF = 0
         self.flywheel_speed = 0
         self.FLYWHEEL_SPEED_DIFFERENCE = 30
@@ -120,8 +118,7 @@ class Robot():
         intake.spin_for(FORWARD, 0.4, SECONDS, 100, PERCENT)
 
     def _move(self, distance, velocity):
-        ERROR_CONSTANT = 3.33
-        drivetrain.drive_for(FORWARD, distance * ERROR_CONSTANT, INCHES, velocity, PERCENT)
+        drivetrain.drive_for(FORWARD, distance, INCHES, velocity, PERCENT)
 
     def _turn(self, heading, velocity):
         drivetrain.turn_to_heading(heading, DEGREES, velocity, PERCENT)
@@ -129,38 +126,53 @@ class Robot():
     def _intake(self, duration):
         intake.spin_for(FORWARD, duration, SECONDS, 100, PERCENT)
 
+    def _roller(self, rotation):
+        roller.spin_for(FORWARD, rotation, DEGREES, 100, PERCENT)
+
     def prog_skills(self):
-        FAST_DRIVE_SPEED = 50
+        FAST_DRIVE_SPEED = 60
         DRIVE_SPEED = 30
         TURN_SPEED = 30
-        INTAKE_DURATION = 0.4
+        ROLLER_ROTATION = 140
 
         # Move backward and get the back roller
         self._move(2, DRIVE_SPEED)
-        self._intake(INTAKE_DURATION)
+        self._roller(ROLLER_ROTATION)
 
         # Move towards and get the left roller
-        self._move(-20, DRIVE_SPEED)
+        self._move(-22, DRIVE_SPEED)
         self._turn(90, TURN_SPEED)
 
-        self._move(23, DRIVE_SPEED)
-        self._intake(INTAKE_DURATION)
+        self._move(20, DRIVE_SPEED)
+        self._roller(ROLLER_ROTATION)
 
         # Move towards the high goal while intaking, and launch discs
         self._move(-9, DRIVE_SPEED)
         self._turn(225, TURN_SPEED)
-        self._move(124, FAST_DRIVE_SPEED)
+        self.flywheel_far()
+        self.intake_on()
+        self._move(60, FAST_DRIVE_SPEED)
+
+        # Fire 2 preloads
+        self._turn(325, TURN_SPEED)
+        self.launch()
+        wait(2, SECONDS)
+        self.launch()
+        wait(0.5, SECONDS)
+
+        self._turn(225, TURN_SPEED)
+        self._move(95, FAST_DRIVE_SPEED)
         self._turn(180, TURN_SPEED)
 
         # Move towards and get the top roller
-        self._move(24, DRIVE_SPEED)
-        self._intake(INTAKE_DURATION)
+        self._move(7, DRIVE_SPEED)
+        self._roller(ROLLER_ROTATION)
 
         # Move towards and get the right roller
-        self._move(-24, DRIVE_SPEED)
+        self._move(-18, DRIVE_SPEED)
         self._turn(270, TURN_SPEED)
-        self._move(12, DRIVE_SPEED)
-        self._intake(INTAKE_DURATION)
+        self._move(23, DRIVE_SPEED)
+        self._roller(ROLLER_ROTATION)
 
         # Expand
         self._move(-12, DRIVE_SPEED)
@@ -187,7 +199,7 @@ class Robot():
 
     def roller_on(self):
         roller.set_max_torque(100, PERCENT)
-        roller.spin(FORWARD, 12, VOLT)
+        roller.spin(FORWARD, 8.5, VOLT)
 
     def roller_off(self):
         roller.stop(COAST)
@@ -214,11 +226,9 @@ class Robot():
         y_power = controller.axis3.position() * self.DRIVE_MULTIPLER
 
         front_left_wheel.spin(FORWARD, (y_power + x_power) / 10.9, VOLT)
-        middle_left_wheel.spin(FORWARD, (y_power + x_power) / 10.9, VOLT)
         back_left_wheel.spin(FORWARD, (y_power + x_power) / 10.9, VOLT)
 
         front_right_wheel.spin(FORWARD, (y_power - x_power) / 10.9, VOLT)
-        middle_right_wheel.spin(FORWARD, (y_power - x_power) / 10.9, VOLT)
         back_right_wheel.spin(FORWARD, (y_power - x_power) / 10.9, VOLT)
 
     # flywheel
