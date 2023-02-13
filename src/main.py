@@ -26,13 +26,14 @@ class Robot():
         Competition(self.driver_controlled, self.auton)
 
         self.DRIVE_MULTIPLER = 1
-        self.TURN_MULTIPLER = 0.7
+        self.TURN_MULTIPLER = 1
 
         self.FLYWHEEL_FAR = 390
-        self.FLYWHEEL_CLOSE = 350
+        self.FLYWHEEL_CLOSE = 360 # prev 335
         self.FLYWHEEL_OFF = 0
         self.flywheel_speed = 0
         self.FLYWHEEL_SPEED_DIFFERENCE = 30
+
         self.MAX_LAUNCHES = 45
         self.remaining_launches = int(self.MAX_LAUNCHES)
 
@@ -40,7 +41,7 @@ class Robot():
         self.autons = [
             {'name': 'LEFT SINGLE', 'action': self.left_single}, 
             {'name': 'LEFT DOUBLE', 'action': self.left_double}, 
-            {'name': 'POG SKILLS', 'action': self.prog_skills},
+            {'name': 'PROG SKILLS', 'action': self.prog_skills},
             {'name': 'NO AUTON', 'action': self.no_auton},
         ]
 
@@ -67,11 +68,13 @@ class Robot():
         controller.axis1.changed(self.on_controller_changed)
         controller.axis3.changed(self.on_controller_changed)
 
-        controller.buttonL1.pressed(self.intake_on)
+        controller.buttonL1.pressed(self.intake_forward)
         controller.buttonL1.released(self.intake_off)
-        controller.buttonL2.pressed(self.roller_on)
-        controller.buttonL2.released(self.roller_off)
+        controller.buttonL2.pressed(self.intake_reverse)
+        controller.buttonL2.released(self.intake_off)
         controller.buttonR1.pressed(self.launch)
+        controller.buttonR2.pressed(self.roller_on)
+        controller.buttonR2.released(self.roller_off)
         controller.buttonRight.pressed(self.flywheel_far)
         controller.buttonUp.pressed(self.flywheel_close)
         controller.buttonDown.pressed(self.flywheel_off)
@@ -135,44 +138,79 @@ class Robot():
         TURN_SPEED = 30
         ROLLER_ROTATION = 140
 
-        # Move backward and get the back roller
+        drivetrain.set_timeout(2, SECONDS)
+        roller.set_timeout(2, SECONDS)
+
+        # Get roller 1
         self._move(2, DRIVE_SPEED)
         self._roller(ROLLER_ROTATION)
 
-        # Move towards and get the left roller
-        self._move(-22, DRIVE_SPEED)
+        # Get roller 2
+        self._move(-21, DRIVE_SPEED)
         self._turn(90, TURN_SPEED)
 
+        self.flywheel_speed = 470
         self._move(20, DRIVE_SPEED)
         self._roller(ROLLER_ROTATION)
 
-        # Move towards the high goal while intaking, and launch discs
-        self._move(-9, DRIVE_SPEED)
-        self._turn(225, TURN_SPEED)
+        # Launch preloads
+        self._move(-4, DRIVE_SPEED)
+        self.intake_forward()
+        self._turn(217, TURN_SPEED)
+        self._move(10, DRIVE_SPEED)
+        self._turn(0, TURN_SPEED)
+
+        for volly in range(3):
+            self.launch()
+            wait(2, SECONDS)
+
+        # Intake discs A
         self.flywheel_far()
-        self.intake_on()
-        self._move(60, FAST_DRIVE_SPEED)
+        self._turn(215, TURN_SPEED)
+        self._move(66, FAST_DRIVE_SPEED)
 
-        # Fire 2 preloads
+        # Launch discs A
         self._turn(325, TURN_SPEED)
-        self.launch()
-        wait(2, SECONDS)
-        self.launch()
-        wait(0.5, SECONDS)
+        for volly in range(3):
+            self.launch()
+            wait(2, SECONDS)
 
+        # Intake discs B
         self._turn(225, TURN_SPEED)
-        self._move(95, FAST_DRIVE_SPEED)
+        return
+        self._move(30, 10)
+
+        # Launch discs B
+        self._turn(310, TURN_SPEED)
+        for volly in range(3):
+            self.launch()
+            wait(2, SECONDS)
+
+        # Get roller 3
+        self._turn(225, TURN_SPEED)
+        self._move(60, FAST_DRIVE_SPEED)
         self._turn(180, TURN_SPEED)
 
-        # Move towards and get the top roller
         self._move(7, DRIVE_SPEED)
         self._roller(ROLLER_ROTATION)
 
-        # Move towards and get the right roller
+        # Get roller 4
         self._move(-18, DRIVE_SPEED)
         self._turn(270, TURN_SPEED)
         self._move(23, DRIVE_SPEED)
         self._roller(ROLLER_ROTATION)
+
+        # Intake discs C
+        pass
+
+        # Launch discs C
+        pass
+
+        # Intake discs D
+        pass
+
+        # Launch discs D
+        pass
 
         # Expand
         self._move(-12, DRIVE_SPEED)
@@ -187,7 +225,7 @@ class Robot():
         start_time = time.time()
         self.autons[self.selected_auton]['action']()
         auton_duration = time.time() - start_time
-        print('Auton took {} seconds'.format(auton_duration))
+        print('Auton Elapsed Duration: {} sec'.format(auton_duration))
 
     def select_auton(self):
         if self.selected_auton == len(self.autons) - 1:
@@ -204,9 +242,13 @@ class Robot():
     def roller_off(self):
         roller.stop(COAST)
 
-    def intake_on(self):
+    def intake_forward(self):
         intake.set_max_torque(100, PERCENT)
         intake.spin(FORWARD, 12, VOLT)
+
+    def intake_reverse(self):
+        intake.set_max_torque(100, PERCENT)
+        intake.spin(REVERSE, 12, VOLT)
 
     def intake_off(self):
         intake.stop(COAST)
@@ -225,11 +267,10 @@ class Robot():
         x_power = controller.axis1.position() * self.TURN_MULTIPLER
         y_power = controller.axis3.position() * self.DRIVE_MULTIPLER
 
-        front_left_wheel.spin(FORWARD, (y_power + x_power) / 10.9, VOLT)
-        back_left_wheel.spin(FORWARD, (y_power + x_power) / 10.9, VOLT)
-
-        front_right_wheel.spin(FORWARD, (y_power - x_power) / 10.9, VOLT)
-        back_right_wheel.spin(FORWARD, (y_power - x_power) / 10.9, VOLT)
+        front_left_wheel.spin(FORWARD, (y_power + x_power) / 12, VOLT)
+        back_left_wheel.spin(FORWARD, (y_power + x_power) / 12, VOLT)
+        front_right_wheel.spin(FORWARD, (y_power - x_power) / 12, VOLT)
+        back_right_wheel.spin(FORWARD, (y_power - x_power) / 12, VOLT)
 
     # flywheel
 
