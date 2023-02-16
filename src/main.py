@@ -32,6 +32,8 @@ class Robot():
         self.FLYWHEEL_CLOSE = 360 # prev 335
         self.FLYWHEEL_OFF = 0
         self.flywheel_speed = 0
+        self.is_pid_active = True
+        self.IS_BUMP_ACTIVE = True
         self.FLYWHEEL_SPEED_DIFFERENCE = 30
 
         self.MAX_LAUNCHES = 45
@@ -265,8 +267,17 @@ class Robot():
     def launch(self):
         self.remaining_launches -= 1
         indexer.set(True)
+        
+        if self.IS_BUMP_ACTIVE == True:
+            self.is_pid_active = False
+            flywheel.spin(FORWARD, 12, VOLT)
+
         wait(0.15, SECONDS)
         indexer.set(False)
+
+        # bump
+        wait(0.15, SECONDS)
+        self.is_pid_active = True
 
     def expand(self):
         expansion.set(True)
@@ -300,8 +311,17 @@ class Robot():
         last_error = 0
         total_error = 0
 
-        while True:
+        velocities = []
+        # while True:
+        for second in range(30):
+            wait(0.1, SECONDS)
+
+            if self.is_pid_active == False:
+                continue
+
             velocity = round(flywheel.velocity(RPM))
+            velocities.append(velocity)
+
             error = self.flywheel_speed - velocity
             total_error += error
             derivative = error - last_error
@@ -313,7 +333,15 @@ class Robot():
             else:
                 flywheel.spin(FORWARD, power, VOLT)
 
-            wait(0.1, SECONDS)
+            if second in [20, 23, 26]:
+                target = self.flywheel_speed
+                actual = velocity
+                error = round(((target - actual) / target) * 100)
+                print('FIRE: {} / {} / {}'.format(target, actual, error))
+                self.launch()
+
+        print(*velocities)
+        flywheel.stop(COAST)
 
     # brain
 
