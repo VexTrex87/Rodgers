@@ -138,8 +138,10 @@ class Robot():
         TURN_SPEED = 30
         ROLLER_ROTATION = 140
 
+        drivetrain.set_heading(0, DEGREES)
         drivetrain.set_timeout(2, SECONDS)
         roller.set_timeout(2, SECONDS)
+        self.intake_forward()
 
         # Get roller 1
         self._move(2, DRIVE_SPEED)
@@ -149,15 +151,15 @@ class Robot():
         self._move(-21, DRIVE_SPEED)
         self._turn(90, TURN_SPEED)
 
-        self.flywheel_speed = 470
+        self.flywheel_speed = 450
         self._move(20, DRIVE_SPEED)
         self._roller(ROLLER_ROTATION)
 
         # Launch preloads
         self._move(-4, DRIVE_SPEED)
-        self.intake_forward()
         self._turn(217, TURN_SPEED)
-        self._move(10, DRIVE_SPEED)
+        self.intake_forward()
+        self._move(14, DRIVE_SPEED)
         self._turn(0, TURN_SPEED)
 
         for volly in range(3):
@@ -165,34 +167,41 @@ class Robot():
             wait(2, SECONDS)
 
         # Intake discs A
-        self.flywheel_far()
-        self._turn(215, TURN_SPEED)
-        self._move(66, FAST_DRIVE_SPEED)
+        self.flywheel_speed = 390
+        self._turn(200, TURN_SPEED)
+        self._move(20, DRIVE_SPEED)
+
+        self._turn(225, TURN_SPEED)
+        self._move(42, FAST_DRIVE_SPEED)
 
         # Launch discs A
-        self._turn(325, TURN_SPEED)
+        self._turn(215, TURN_SPEED)
         for volly in range(3):
             self.launch()
             wait(2, SECONDS)
 
         # Intake discs B
+        self.flywheel_speed = 410
         self._turn(225, TURN_SPEED)
-        return
-        self._move(30, 10)
+        self._move(28, FAST_DRIVE_SPEED)
+        self._move(24, DRIVE_SPEED)
 
         # Launch discs B
-        self._turn(310, TURN_SPEED)
+        self._turn(260, TURN_SPEED)
         for volly in range(3):
             self.launch()
             wait(2, SECONDS)
 
         # Get roller 3
         self._turn(225, TURN_SPEED)
-        self._move(60, FAST_DRIVE_SPEED)
-        self._turn(180, TURN_SPEED)
+        self._move(30, FAST_DRIVE_SPEED)
 
-        self._move(7, DRIVE_SPEED)
+        self._turn(180, TURN_SPEED)
+        self._move(4, DRIVE_SPEED)
+        
         self._roller(ROLLER_ROTATION)
+
+        ## continue here ##
 
         # Get roller 4
         self._move(-18, DRIVE_SPEED)
