@@ -39,7 +39,7 @@ class Robot():
         self.MAX_LAUNCHES = 45
         self.remaining_launches = int(self.MAX_LAUNCHES)
 
-        self.selected_auton = 2
+        self.selected_auton = 0
         self.autons = [
             {'name': 'LEFT SINGLE', 'action': self.left_single}, 
             {'name': 'LEFT DOUBLE', 'action': self.left_double}, 
@@ -84,11 +84,30 @@ class Robot():
 
         self.flywheel_close()
 
-    def left_single(self):        
-        # roller 1
-        # launch discs
+    def left_single(self):  
+        DRIVE_SPEED = 30
+        TURN_SPEED = 30
+        ROLLER_ROTATION = 140
 
-        pass
+        drivetrain.set_heading(0, DEGREES)
+        drivetrain.set_timeout(2, SECONDS)
+        roller.set_timeout(2, SECONDS)
+        self.intake_forward()
+        self.flywheel_speed = 500
+
+        # Get roller 1
+        self._move(2, DRIVE_SPEED)
+        self._roller(ROLLER_ROTATION)
+
+        # launch preloads
+        self._move(-2, DRIVE_SPEED)
+        self._turn(-5, TURN_SPEED)
+
+        wait(2, SECONDS)
+
+        for volly in range(3):
+            self.launch()
+            wait(1, SECONDS)
 
     def left_double(self):
         self.flywheel_close()
@@ -144,6 +163,7 @@ class Robot():
         drivetrain.set_timeout(2, SECONDS)
         roller.set_timeout(2, SECONDS)
         self.intake_forward()
+        self.flywheel_speed = 470
 
         # Get roller 1
         self._move(2, DRIVE_SPEED)
@@ -153,20 +173,18 @@ class Robot():
         self._move(-21, DRIVE_SPEED)
         self._turn(90, TURN_SPEED)
 
-        self.flywheel_speed = 450
         self._move(20, DRIVE_SPEED)
         self._roller(ROLLER_ROTATION)
 
         # Launch preloads
         self._move(-4, DRIVE_SPEED)
         self._turn(217, TURN_SPEED)
-        self.intake_forward()
         self._move(14, DRIVE_SPEED)
-        self._turn(0, TURN_SPEED)
+        self._turn(-3, TURN_SPEED)
 
-        for volly in range(3):
+        for volly in range(4):
             self.launch()
-            wait(2, SECONDS)
+            wait(1, SECONDS)
 
         # Intake discs A
         self.flywheel_speed = 390
@@ -177,51 +195,37 @@ class Robot():
         self._move(42, FAST_DRIVE_SPEED)
 
         # Launch discs A
-        self._turn(215, TURN_SPEED)
-        for volly in range(3):
+        self._turn(320, TURN_SPEED)
+
+        for volly in range(4):
             self.launch()
-            wait(2, SECONDS)
+            wait(1, SECONDS)
 
         # Intake discs B
         self.flywheel_speed = 410
-        self._turn(225, TURN_SPEED)
+        self._turn(224, TURN_SPEED)
         self._move(28, FAST_DRIVE_SPEED)
-        self._move(24, DRIVE_SPEED)
+        self._move(28, 15)
 
         # Launch discs B
-        self._turn(260, TURN_SPEED)
-        for volly in range(3):
+        self._turn(290, TURN_SPEED)
+        for volly in range(4):
             self.launch()
-            wait(2, SECONDS)
+            wait(1, SECONDS)
 
         # Get roller 3
-        self._turn(225, TURN_SPEED)
-        self._move(30, FAST_DRIVE_SPEED)
-
+        self._turn(235, TURN_SPEED)
+        self._move(51, FAST_DRIVE_SPEED)
         self._turn(180, TURN_SPEED)
-        self._move(4, DRIVE_SPEED)
-        
-        self._roller(ROLLER_ROTATION)
 
-        ## continue here ##
+        self._move(3, DRIVE_SPEED)
+        self._roller(ROLLER_ROTATION)
 
         # Get roller 4
-        self._move(-18, DRIVE_SPEED)
+        self._move(-20, DRIVE_SPEED)
         self._turn(270, TURN_SPEED)
-        self._move(23, DRIVE_SPEED)
+        self._move(21, DRIVE_SPEED)
         self._roller(ROLLER_ROTATION)
-
-        # Intake discs C
-        pass
-
-        # Launch discs C
-        pass
-
-        # Intake discs D
-        pass
-
-        # Launch discs D
-        pass
 
         # Expand
         self._move(-12, DRIVE_SPEED)
@@ -311,16 +315,8 @@ class Robot():
         last_error = 0
         total_error = 0
 
-        velocities = []
-        # while True:
-        for second in range(30):
-            wait(0.1, SECONDS)
-
-            if self.is_pid_active == False:
-                continue
-
+        while True:
             velocity = round(flywheel.velocity(RPM))
-            velocities.append(velocity)
 
             error = self.flywheel_speed - velocity
             total_error += error
@@ -333,15 +329,7 @@ class Robot():
             else:
                 flywheel.spin(FORWARD, power, VOLT)
 
-            if second in [20, 23, 26]:
-                target = self.flywheel_speed
-                actual = velocity
-                error = round(((target - actual) / target) * 100)
-                print('FIRE: {} / {} / {}'.format(target, actual, error))
-                self.launch()
-
-        print(*velocities)
-        flywheel.stop(COAST)
+            wait(0.1, SECONDS)
 
     # brain
 
